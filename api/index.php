@@ -16,9 +16,11 @@ $pageNumber = rand(1, 20);
 
 try {
 
-    $shows = $client->get_shows(array('page-size' => 20, 'page' => $pageNumber));
+    $histories = $client->get_shows(array('page-size' => 20, 'page' => $pageNumber, 'genre-slug' => 'history'));
+    
+    // file_put_contents('histories.json', json_encode($histories, JSON_PRETTY_PRINT));
 
-    echo json_encode($shows);
+    echo json_encode($histories);
 
 } catch (Exception $e) {
     echo json_encode(['error' => 'Error Retrieving Show: ' . $e->getMessage()]);
