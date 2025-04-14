@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 // Read and decode the input data from the frontend
 $inputData = file_get_contents("php://input");
 $input = json_decode($inputData, true);
+file_put_contents("inputs.txt", json_encode($input));
 
 // Access the recommendations array
 $recommendationIds = $input['recommendations'] ?? null;
@@ -55,6 +56,8 @@ foreach ($recommendationIds as $recommendationId) {
         $showDetailsArray[] = ['error' => 'Error fetching show for recommendation ID: ' . $recommendationId . ' - ' . $e->getMessage()];
     }
 }
+
+file_put_contents("json.txt", json_encode($showDetailsArray));
 
 // Return the array of show details (or error messages) to the frontend
 echo json_encode($showDetailsArray);
