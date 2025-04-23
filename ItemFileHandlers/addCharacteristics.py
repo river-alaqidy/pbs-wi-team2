@@ -21,7 +21,7 @@ AUTH_HEADER = {
     'Authorization': '' # needs to have Base64-encoded string from media manager combo of user and pass
 }
 # input file will be modified when script is run
-INPUT_FILE = 'Team2ItemsAllDistinct.csv' # uses item id to find specified attribute in media manager api
+INPUT_FILE = 'Team2Items.csv' # uses item id to find specified attribute in media manager api
 
 MEDIA_ATTRIBUTE = 'premiered_on' # characterisitc in media manager api
 ITEM_COLUMN = 'CREATION_TIMESTAMP' # new column corresponding to media manager api attribute

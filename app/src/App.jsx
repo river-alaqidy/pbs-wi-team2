@@ -1,155 +1,133 @@
-import { useEffect, useState } from "react";
-import { Card, Button, Row, Col, Container, Image, Spinner } from "react-bootstrap";
+import { Navbar, NavDropdown, Container, Card } from 'react-bootstrap';
+import Carousel from 'react-multi-carousel';
+import 'react-multi-carousel/lib/styles.css';
+import { useEffect, useState } from 'react';
+
+const Box = ({ text, image }) => (
+    <Card className="me-3" style={{ minWidth: '200px' }}>
+        <Card.Img variant="top" src={image} />
+        <Card.Body className="text-center">
+            <Card.Text>{text}</Card.Text>
+        </Card.Body>
+    </Card>
+);
+
+const SwimLane = ({ title, items }) => {
+    const responsive = {
+        superLargeDesktop: {
+            breakpoint: { max: 4000, min: 1200 },
+            items: 4,
+            slidesToSlide: 4,
+        },
+        desktop: {
+            breakpoint: { max: 1200, min: 992 },
+            items: 3,
+            slidesToSlide: 3,
+        },
+        tablet: {
+            breakpoint: { max: 992, min: 768 },
+            items: 2,
+            slidesToSlide: 2,
+        },
+        mobile: {
+            breakpoint: { max: 768, min: 0 },
+            items: 1,
+            slidesToSlide: 1,
+        },
+    };
+
+    return (
+        <div className="mb-5">
+            <h5 className="mb-3">{title}</h5>
+            <Carousel
+                responsive={responsive}
+                infinite
+                arrows
+                containerClass="carousel-container"
+                itemClass="carousel-item-padding-40-px"
+            >
+                {items.map((item, idx) => (
+                    <Box key={idx} text={item.text} image={item.image} />
+                ))}
+            </Carousel>
+        </div>
+    );
+};
 
 function App() {
+    
     const [recommendations, setRecommendations] = useState([]);
-    const [selectedUserId, setSelectedUserId] = useState(null);
-    const [selectedUserName, setSelectedUserName] = useState(null);
-    const [loading, setLoading] = useState(false); 
     const [shows, setShows] = useState([]);
 
-    // for now displaying users will be hardcoded, but recommendations will be real
-    const userIds = [
-        { id: "77da964d-7732-41f1-bce3-30e566da53ea", user: "Amy" },
-        { id: "622d3358-3689-4482-bb59-25422634bb7a", user: "Rebecca" },
-        { id: "a8153bce-d97c-4368-a464-7ff2fba291b0", user: "Richard" },
-        { id: "c7bb225a-90a3-4953-9e88-87ec1e62a925", user: "Lindsay" },
-    ];
+    const defaultImage = "https://images.unsplash.com/photo-1741704751367-e276706e530d?q=80&w=3132&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
-    // get shows from api based on recommendations
     const fetchShowDetails = (recommendationIds) => {
-        setLoading(true);
         fetch("http://localhost:8000/index.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ recommendations: recommendationIds })
         })
-        .then(response => response.json())
-        .then(data => {
-            // console.log("Show details:", data);
-            setShows(data);
-            setLoading(false);
-        })
-        .catch(error => {
-            console.error("Error fetching show details:", error);
-            setLoading(false);
-        });
+            .then(response => response.json())
+            .then(data => {
+                const images = data.map((prev, idx) => {
+                    const imgObj = prev.data.attributes.images.find(img => img.profile === 'asset-mezzanine-16x9'); // TODO: change to #show if needed
+                    return {
+                        text: prev.data.attributes.title, // TODO: figure out which titles/images to display. could do a combo of assets and shows, could also just make show ids be unique
+                        image: imgObj?.image || defaultImage
+                    };
+                    // TODO: decide between sims and all 3 solutions
+                    // TODO: can we figure out how to play videos???
+                });
+                setShows(images);
+            })
+            .catch(error => {
+                console.error("Error fetching show details:", error);
+            });
     }
 
-    // get recommendations
     useEffect(() => {
-        if (selectedUserId) {
-            setLoading(true);
-            fetch("https://8v7afwqlb1.execute-api.us-east-1.amazonaws.com/prod/recommendations", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: selectedUserId })
+        fetch("https://8v7afwqlb1.execute-api.us-east-1.amazonaws.com/dev/recommendations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: "03665f13-643c-4aca-be92-8572d98b3473" })
+        })
+            .then(response => response.json())
+            .then(data => {
+                const recommendationIds = data.map(prev => prev.itemId);
+                setRecommendations(recommendationIds);
+                fetchShowDetails(recommendationIds);
             })
-                .then(response => response.json())
-                .then(data => {
-                    const recommendationIds = data.map(prev => prev.itemId);
-                    setRecommendations(recommendationIds);
-                    fetchShowDetails(recommendationIds);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    setLoading(false);
-                });
-        }
-    }, [selectedUserId]);
+            .catch(error => {
+                console.error("Error:", error);
+            });
+    }, []);
 
-    const handleButtonClick = (userId, userName) => {
-        setSelectedUserId(userId);
-        setSelectedUserName(userName);
-    };
+    const generateBoxes = (laneName) =>
+        Array.from({ length: 12 }, (_, i) => ({
+            text: `${laneName} - Box ${i + 1}`,
+            image: defaultImage
+        }));
 
     return (
-        <Container>
-            <h1>Returning Users</h1>
-            <Row>
-                {userIds.map((user, index) => (
-                    <Col key={index} xs={12} sm={6} md={4} lg={3} className="mb-3">
-                        <Card className="h-100">
-                            <Card.Body className="d-flex flex-column">
-                                <Card.Title>{user.user}</Card.Title>
-                                {(user.user === "Amy") ? 
-                                  <div>
-                                    <h6>
-                                      Watch History Genres:
-                                    </h6>
-                                    <p>
-                                      Drama, Food
-                                    </p>
-                                  </div> : 
-                                    (user.user === "Rebecca") ? 
-                                    <div>
-                                      <h6>
-                                        Watch History Genres:
-                                      </h6>
-                                      <p>
-                                        Drama
-                                      </p>
-                                  </div> :
-                                    (user.user === "Richard") ? 
-                                    <div>
-                                      <h6>
-                                        Watch History Genres:
-                                      </h6>
-                                      <p>
-                                        History, Drama
-                                      </p>
-                                  </div> :
-                                      <div>
-                                      <h6>
-                                        Watch History Genres:
-                                      </h6>
-                                      <p>
-                                        Arts and Music, Science and Nature, Drama
-                                      </p>
-                                    </div>
-                                }
-                                <div className="mt-auto">
-                                  <Button onClick={() => handleButtonClick(user.id, user.user)}>
-                                      Get Recommendations
-                                  </Button>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                ))}
-            </Row>
+        <>
+            <Navbar bg="dark" variant="dark" expand="lg">
+                <Container>
+                    <Navbar.Brand href="#">PBS</Navbar.Brand>
+                    <NavDropdown title="Menu" id="basic-nav-dropdown">
+                        <NavDropdown.Item href="#action1">Action</NavDropdown.Item>
+                        <NavDropdown.Item href="#action2">Another action</NavDropdown.Item>
+                        <NavDropdown.Divider />
+                        <NavDropdown.Item href="#action3">Something else</NavDropdown.Item>
+                    </NavDropdown>
+                </Container>
+            </Navbar>
 
-            {recommendations.length > 0 && selectedUserName && (
-                <div>
-                    <h2>Recommendations for {selectedUserName}</h2>
-                    <Container>
-                        {loading ? (
-                            // Show the loading spinner when loading is true
-                            <Row className="justify-content-center">
-                                <Spinner animation="border" variant="primary" />
-                            </Row>
-                        ) : (
-                            // Once loading is false, show the images in cards
-                            <Row>
-                                {shows.map((show, index) => (
-                                    <Col key={index} xs={12} sm={6} md={4} lg={3} className="mb-3">
-                                        <Card>
-                                            <Card.Img variant="top" src={show.data.attributes.images.find(image => image.profile === 'show-mezzanine16x9').image} alt={`image ${index}`} />
-                                            <Card.Body>
-                                              <Card.Title style={{ marginBottom: '0.1rem' }}>Genre:</Card.Title>
-                                              <Card.Text style={{ marginTop: '0', marginBottom: '0.5rem' }}>
-                                                {show.data.attributes.genre.title}
-                                              </Card.Text>
-                                            </Card.Body>
-                                        </Card>
-                                    </Col>
-                                ))}
-                            </Row>
-                        )}
-                    </Container>
-                </div>
-            )}
-        </Container>
+            <Container className="mt-4">
+                <SwimLane title="Trending Now" items={shows} />
+                <SwimLane title="New Releases" items={generateBoxes('New')} />
+                <SwimLane title="Watch Again" items={generateBoxes('Watch')} />
+            </Container>
+        </>
     );
 }
 

@@ -44,13 +44,13 @@ foreach ($recommendationIds as $recommendationId) {
         $asset = $client->get_asset($recommendationId);
 
         // Extract the show ID from the asset's parent tree
-        $showId = $asset["data"]["attributes"]["parent_tree"]["attributes"]["season"]["attributes"]["show"]["id"];
+        // $showId = $asset["data"]["attributes"]["parent_tree"]["attributes"]["season"]["attributes"]["show"]["id"];
 
         // Fetch the show details using the extracted show ID
-        $show = $client->get_show($showId);
+        // $show = $client->get_show($showId);
 
         // Add the show details to the array
-        $showDetailsArray[] = $show;
+        $showDetailsArray[] = $asset; # used to be $show
     } catch (Exception $e) {
         // Log any errors encountered while fetching the asset or show
         $showDetailsArray[] = ['error' => 'Error fetching show for recommendation ID: ' . $recommendationId . ' - ' . $e->getMessage()];
