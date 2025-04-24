@@ -5,27 +5,32 @@ import { useEffect, useState } from 'react';
 import { Placeholder } from 'react-bootstrap';
 import './App.css';
 
-const Box = ({ text, image }) => (
-    <Card className="me-3" style={{ minWidth: '200px' }}>
-        <div style={{ height: '175px', overflow: 'hidden' }}>
-            <Card.Img
-                variant="top"
+const Box = ({ text, image, episode, duration, genre, premiered }) => (
+    <div style={{ minWidth: '200px', marginRight: '1rem' }}>
+        <div style={{ height: '175px', overflow: 'hidden', borderRadius: '8px' }}>
+            <img
                 src={image}
+                alt={text}
                 style={{
                     height: '100%',
                     width: '100%',
                     objectFit: 'cover',
+                    borderRadius: '8px',
+                    display: 'block',
                 }}
             />
         </div>
-        <Card.Body className="text-center">
-            <Card.Text className="text-truncate">{text}</Card.Text>
-        </Card.Body>
-    </Card>
+        <div style={{ paddingTop: '8px', color: '#0A145A' }}>
+            <div style={{ fontSize: '0.95rem', fontWeight: '600' }} className="text-truncate">{text}</div>
+            {episode && <div style={{ fontSize: '0.8rem' }} className="text-truncate">{episode}</div>}
+            {duration && <div style={{ fontSize: '0.75rem', color: '#6c757d', marginTop:'5px'}}>{Math.floor(duration / 60)}m | {new Date(premiered).toLocaleDateString()} | {genre}</div>}
+        </div>
+    </div>
 );
 
+
 const SwimLane = ({ title, items, loading = false, index = 0 }) => {
-    const backgroundColor = index % 2 === 0 ? "#F6F8FA" : "#ffffff"; // white / light grey
+    const backgroundColor = index % 2 === 0 ? "#F6F8FA" : "#ffffff";
 
     const responsive = {
         superLargeDesktop: {
@@ -51,17 +56,56 @@ const SwimLane = ({ title, items, loading = false, index = 0 }) => {
     };
 
     const placeholderItems = Array.from({ length: 4 }, (_, idx) => (
-        <Card key={idx} className="me-3" style={{ minWidth: '200px' }}>
-            <div style={{ height: '175px', overflow: 'hidden' }}>
-                <Placeholder as="div" animation="wave" className="w-100 h-100 bg-secondary" />
-            </div>
-            <Card.Body className="text-center">
-                <Placeholder as={Card.Text} animation="wave">
-                    <Placeholder xs={8} />
+        <div key={idx} style={{ minWidth: '200px', marginRight: '1rem' }}>
+            <div style={{ height: '175px', overflow: 'hidden', borderRadius: '8px' }}>
+                <Placeholder animation="wave">
+                    <Placeholder
+                        style={{
+                            height: '100%',
+                            width: '100%',
+                            display: 'block',
+                            borderRadius: '8px',
+                            backgroundColor: '#5227cc'
+                        }}
+                    />
                 </Placeholder>
-            </Card.Body>
-        </Card>
+            </div>
+            <div style={{ paddingTop: '8px' }}>
+                <Placeholder animation="wave">
+                    <Placeholder
+                        xs={7}
+                        style={{
+                            height: '0.95rem',
+                            marginBottom: '6px',
+                            display: 'block',
+                            backgroundColor: '#8540f5'
+                        }}
+                    />
+                </Placeholder>
+                <Placeholder animation="wave">
+                    <Placeholder
+                        xs={5}
+                        style={{
+                            height: '0.8rem',
+                            marginBottom: '5px',
+                            display: 'block',
+                            backgroundColor: '#a370f7'
+                        }}
+                    />
+                </Placeholder>
+                <Placeholder animation="wave">
+                    <Placeholder
+                        xs={4}
+                        style={{
+                            height: '0.75rem',
+                            backgroundColor: '#c29ffa'
+                        }}
+                    />
+                </Placeholder>
+            </div>
+        </div>
     ));
+    
 
     return (
         <div className="swim-lane" style={{ backgroundColor, paddingTop: '50px', paddingBottom: '50px', margin: '0 -15px' }}>
@@ -76,8 +120,17 @@ const SwimLane = ({ title, items, loading = false, index = 0 }) => {
                     itemClass="carousel-item-padding-40-px"
                 >
                     {loading ? placeholderItems : items.map((item, idx) => (
-                        <Box key={idx} text={item.text} image={item.image} />
-                    ))}
+                        <Box
+                            key={idx}
+                            text={item.text}
+                            image={item.image}
+                            episode={item.episode}
+                            duration={item.duration}
+                            genre = {item.genre}
+                            premiered={item.premiered}
+                        />
+                    ))
+                    }
                 </Carousel>
             </div>
         </div>
@@ -86,12 +139,19 @@ const SwimLane = ({ title, items, loading = false, index = 0 }) => {
 
 function App() {
     const [loadingShows, setLoadingShows] = useState(true);
-    const [recommendations, setRecommendations] = useState([]);
     const [shows, setShows] = useState([]);
+
+    const [loadingSims, setLoadingSims] = useState(true);
+    const [simsItemIds, setSimsItemIds] = useState([]);
+
+    const [loadingSims2, setLoadingSims2] = useState(true);
+    const [sims2ItemIds, setSims2ItemIds] = useState([]);
+
+
 
     const defaultImage = "https://images.unsplash.com/photo-1741704751367-e276706e530d?q=80&w=3132&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
 
-    const fetchShowDetails = (recommendationIds) => {
+    const fetchUsePersDetails = (recommendationIds) => {
         setLoadingShows(true);
         fetch("http://localhost:8000/index.php", {
             method: "POST",
@@ -100,13 +160,18 @@ function App() {
         })
             .then(response => response.json())
             .then(data => {
+                console.log(data)
                 const images = data.map((prev, idx) => {
-                    const imgObj = prev.data.attributes.images.find(img => img.profile === 'show-mezzanine16x9');
                     return {
-                        text: prev.data.attributes.title,
-                        image: imgObj?.image || defaultImage
+                        text: prev.show_name,
+                        image: prev.show_image || defaultImage,
+                        episode: prev.episode_name,
+                        genre: prev.show_genre,
+                        duration: prev.episode_duration,
+                        premiered: prev.episode_premiered_on
                     };
                 });
+                
                 setShows(images);
                 setLoadingShows(false);
             })
@@ -116,28 +181,115 @@ function App() {
             });
     };
 
-    useEffect(() => {
-        fetch("https://8v7afwqlb1.execute-api.us-east-1.amazonaws.com/dev/recommendations", {
+    const fetchSimsDetails = (recommendationIds) => {
+        setLoadingSims(true);
+        fetch("http://localhost:8000/index.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: "03665f13-643c-4aca-be92-8572d98b3473" })
+            body: JSON.stringify({ recommendations: recommendationIds })
         })
             .then(response => response.json())
             .then(data => {
-                const recommendationIds = data.map(prev => prev.itemId);
-                setRecommendations(recommendationIds);
-                fetchShowDetails(recommendationIds);
+                console.log("sims api resp")
+                console.log(data)
+                const images = data.map((prev, idx) => {
+                    return {
+                        text: prev.show_name,
+                        image: prev.show_image || defaultImage,
+                        episode: prev.episode_name,
+                        genre: prev.show_genre,
+                        duration: prev.episode_duration,
+                        premiered: prev.episode_premiered_on
+                    };
+                });
+                
+                setSimsItemIds(images);
+                setLoadingSims(false);
             })
             .catch(error => {
-                console.error("Error:", error);
+                console.error("Error fetching show details:", error);
+                setLoadingSims(false);
             });
-    }, []);
+    };
 
-    const generateBoxes = (laneName) =>
-        Array.from({ length: 12 }, (_, i) => ({
-            text: `${laneName} - Box ${i + 1}`,
-            image: defaultImage
-        }));
+    const fetchSims2Details = (recommendationIds) => {
+        setLoadingSims2(true);
+        fetch("http://localhost:8000/index.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ recommendations: recommendationIds })
+        })
+            .then(response => response.json())
+            .then(data => {
+                const images = data.map((prev, idx) => {
+                    return {
+                        text: prev.show_name,
+                        image: prev.show_image || defaultImage,
+                        genre: prev.show_genre,
+                        episode: prev.episode_name,
+                        duration: prev.episode_duration,
+                        premiered: prev.episode_premiered_on
+                    };
+                });
+    
+                setSims2ItemIds(images);
+                setLoadingSims2(false);
+            })
+            .catch(error => {
+                console.error("Error fetching sims2 show details:", error);
+                setLoadingSims2(false);
+            });
+    };
+    
+
+    useEffect(() => {
+        const userId = "03665f13-643c-4aca-be92-8572d98b3473";
+        const sims1 = "3c4017d8-1647-4ee6-86d6-7e2f36972e08"; // Already defined above
+        const sims2 = "65545559-4cc4-44f3-83c3-a30b40e50a38";
+    
+        // Fetch User Personalization
+        fetch("https://8v7afwqlb1.execute-api.us-east-1.amazonaws.com/dev/recommendations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const recommendationIds = data.map(i => i.itemId);
+            fetchUsePersDetails(recommendationIds);
+        })
+        .catch(err => console.error("UserPers Error:", err));
+    
+        // Fetch Sims Recommendations
+        fetch("https://8v7afwqlb1.execute-api.us-east-1.amazonaws.com/dev/sims", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ itemId: sims1 })
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log("sims data:")
+            console.log(data)
+            const simItemIds = data.map(i => i.itemId);
+            fetchSimsDetails(simItemIds);
+        })
+        .catch(err => console.error("Sims Error:", err));
+
+        fetch("https://8v7afwqlb1.execute-api.us-east-1.amazonaws.com/dev/sims", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ itemId: sims2 })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const sim2ItemIds = data.map(i => i.itemId);
+            fetchSims2Details(sim2ItemIds);
+        })
+        .catch(err => console.error("Sims2 Error:", err));
+        
+    
+    }, []);
+    
 
     return (
         <>
@@ -183,9 +335,9 @@ function App() {
             {/* TODO: maybe put a your next watch with show description?? */}
 
             <Container fluid className="px-0 mb-5">
-                <SwimLane title="Trending Now" items={shows} loading={loadingShows} index={0} />
-                <SwimLane title="New Releases" items={generateBoxes('New')} index={1} />
-                <SwimLane title="Watch Again" items={generateBoxes('Watch')} index={2} />
+                <SwimLane title="Trending Now" items={shows} loading={loadingShows} index={1} />
+                <SwimLane title="Because You Watched..." items={simsItemIds} loading={loadingSims} index={2} />
+                <SwimLane title="More Like That" items={sims2ItemIds} loading={loadingSims2} index={3} />
             </Container>
         </>
     );
