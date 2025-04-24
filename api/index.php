@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 // Read and decode the input data from the frontend
 $inputData = file_get_contents("php://input");
 $input = json_decode($inputData, true);
-file_put_contents("inputs.txt", json_encode($input));
+// file_put_contents("inputs.txt", json_encode($input));
 
 // Access the recommendations array
 $recommendationIds = $input['recommendations'] ?? null;
@@ -44,20 +44,20 @@ foreach ($recommendationIds as $recommendationId) {
         $asset = $client->get_asset($recommendationId);
 
         // Extract the show ID from the asset's parent tree
-        // $showId = $asset["data"]["attributes"]["parent_tree"]["attributes"]["season"]["attributes"]["show"]["id"];
+        $showId = $asset["data"]["attributes"]["parent_tree"]["attributes"]["season"]["attributes"]["show"]["id"];
 
         // Fetch the show details using the extracted show ID
-        // $show = $client->get_show($showId);
+        $show = $client->get_show($showId);
 
         // Add the show details to the array
-        $showDetailsArray[] = $asset; # used to be $show
+        $showDetailsArray[] = $show; # used to be $show
     } catch (Exception $e) {
         // Log any errors encountered while fetching the asset or show
         $showDetailsArray[] = ['error' => 'Error fetching show for recommendation ID: ' . $recommendationId . ' - ' . $e->getMessage()];
     }
 }
 
-file_put_contents("json.txt", json_encode($showDetailsArray));
+// file_put_contents("json.txt", json_encode($showDetailsArray));
 
 // Return the array of show details (or error messages) to the frontend
 echo json_encode($showDetailsArray);
