@@ -1,0 +1,16 @@
+body {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.custom-dropdown > .nav-link,
+.custom-dropdown > .dropdown-toggle {
+  color: white !important;
+  transition: color 0.2s ease;
+}
+
+.custom-dropdown > .nav-link:hover,
+.custom-dropdown > .dropdown-toggle:hover,
+.custom-dropdown > .nav-link:focus,
+.custom-dropdown > .dropdown-toggle:focus {
+  color: #cccccc !important;
+}
