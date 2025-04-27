@@ -129,7 +129,6 @@ const SwimLane = ({ title, items, itemName, loading = false, index = 0 }) => {
                     </h5>
                 )}
                 <Carousel
-                    // key={items.length}
                     responsive={responsive}
                     infinite
                     arrows
@@ -154,6 +153,7 @@ const SwimLane = ({ title, items, itemName, loading = false, index = 0 }) => {
 };
 
 function App() {
+    // example users
     const users = [
         {
             name: "Alice",
@@ -195,6 +195,7 @@ function App() {
 
     const allLanesLoaded = !(loadingShows || loadingSims || loadingSims2);
 
+    // user personalization recipe
     const fetchUsePersDetails = (recommendationIds) => {
         setLoadingShows(true);
         fetch("http://localhost:8000/index.php", {
@@ -204,8 +205,6 @@ function App() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log("user pers api resp:")
-                console.log(data)
                 const images = data.map(prev => ({
                     text: prev.show_name,
                     image: prev.show_image,
@@ -223,6 +222,7 @@ function App() {
             });
     };
 
+    // sims1 recipe
     const fetchSimsDetails = (recommendationIds) => {
         setLoadingSims(true);
         fetch("http://localhost:8000/index.php", {
@@ -232,8 +232,6 @@ function App() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log("sims1 api resp:")
-                console.log(data)
                 const images = data.map(prev => ({
                     text: prev.show_name,
                     image: prev.show_image,
@@ -251,6 +249,7 @@ function App() {
             });
     };
 
+    // sims2 recipe
     const fetchSims2Details = (recommendationIds) => {
         setLoadingSims2(true);
         fetch("http://localhost:8000/index.php", {
@@ -260,8 +259,6 @@ function App() {
         })
             .then(response => response.json())
             .then(data => {
-                console.log("sims2 api resp:")
-                console.log(data)
                 const images = data.map(prev => ({
                     text: prev.show_name,
                     image: prev.show_image,
@@ -279,6 +276,7 @@ function App() {
             });
     };
 
+    // get recommendation ids from personalize
     useEffect(() => {
         const { userId, sims1, sims2 } = currentUser;
 
