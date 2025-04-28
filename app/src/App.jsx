@@ -163,10 +163,12 @@ function App() {
             sims2: "4dcd2fc5-4662-42b9-bd74-713d34ec09a2",
             sims2name: "Jamaica Inn",
             genres: [
-                "Cooking",
-                "Travel",
-                "Food & Drink",
-                "Documentary"
+                "Drama",
+                "History",
+                "Arts and Music",
+                "Science and Nature",
+                "Nature",
+                "Food"
             ]
         },
         {
@@ -178,9 +180,9 @@ function App() {
             sims2name: "Finding Your Roots",
             genres: [
                 "History",
-                "Biography",
-                "Documentary",
-                "Science & Nature"
+                "Culture",
+                "Arts and Music",
+                "News and Public Affairs"
             ]
         },
         {
@@ -191,10 +193,8 @@ function App() {
             sims2: "2ee500b2-3d17-4576-8f79-448a998c9ab8",
             sims2name: "FRONTLINE",
             genres: [
-                "Science & Nature",
-                "Documentary",
-                "History",
-                "Current Affairs"
+                "News and Public Affairs",
+                "Science and Nature"
             ]
         }
     ];
@@ -372,7 +372,7 @@ function App() {
                                             {user.genres.join(", ")}
                                         </div>
                                     ) : (
-                                        <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>No history</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>Error fetching genres</div>
                                     )}
                                 </NavDropdown.Item>
                             ))}
