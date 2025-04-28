@@ -156,33 +156,47 @@ function App() {
     // example users
     const users = [
         {
-            name: "Alice",
+            name: "Christopher",
             userId: "25a82ccb-f473-4f87-8ba3-c0cfc3d4f104",
             sims1: "90c586b3-f9d5-4f2d-905e-6b52c6eed01f",
             sims1name: "New Scandinavian Cooking",
             sims2: "4dcd2fc5-4662-42b9-bd74-713d34ec09a2",
-            sims2name: "Jamaica Inn"
-
+            sims2name: "Jamaica Inn",
+            history: [
+                "e6af3f45-c8b2-4e57-8a9a-a55ea64d4c12",
+                "8f23e700-14c4-4b37-b2ac-cf73b368fab6",
+                "71138e02-fa84-4276-bca6-6a99cbfc7416",
+                "75804107-4ff5-4069-b9b4-0d6af9175e46",
+                "4ccba5d4-5e16-4a1e-8faa-807da73fb0d4",
+                "21f6c213-b167-441c-aad6-afbe3c46a66f",
+                "52c79615-05c1-45d5-ab39-cd02c725b114",
+                "ee1eb3a1-a20c-4c6a-8ec2-742577ce2da8"
+            ]
         },
         {
-            name: "Richard",
+            name: "Tami",
             userId: "03665f13-643c-4aca-be92-8572d98b3473",
             sims1: "0f957b9c-4775-4b74-8192-3c60d9172f64",
             sims1name: "American Experience",
             sims2: "5abd1675-ebf4-428f-afc1-3ee40ec19299",
-            sims2name: "Finding Your Roots"
+            sims2name: "Finding Your Roots",
+            history: []
         },
         {
-            name: "Lindsay",
+            name: "Jerry",
             userId: "c7b760fe-5013-45cc-b195-548950276f33",
             sims1: "46573fe1-546d-4cc6-8421-de4f4fd6db47",
             sims1name: "NOVA",
             sims2: "2ee500b2-3d17-4576-8f79-448a998c9ab8",
-            sims2name: "FRONTLINE"
+            sims2name: "FRONTLINE",
+            history: []
         }
     ];
 
     const [currentUser, setCurrentUser] = useState(users[0]);
+
+    const [loadingHistory, setLoadingHistory] = useState(true);
+    const [historyItems, setHistoryItems] = useState([]);
 
     const [loadingShows, setLoadingShows] = useState(true);
     const [shows, setShows] = useState([]);
@@ -193,7 +207,34 @@ function App() {
     const [loadingSims2, setLoadingSims2] = useState(true);
     const [sims2ItemIds, setSims2ItemIds] = useState([]);
 
-    const allLanesLoaded = !(loadingShows || loadingSims || loadingSims2);
+    const allLanesLoaded = !(loadingHistory || loadingShows || loadingSims || loadingSims2);
+
+    const fetchHistoryDetails = (historyIds) => {
+        setLoadingHistory(true);
+        if (!historyIds.length) {
+            setHistoryItems([]);
+            setLoadingHistory(false);
+            return;
+        }
+        fetch("http://localhost:8000/index.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ recommendations: historyIds })
+        })
+            .then(response => response.json())
+            .then(data => {
+                const images = data.map(prev => ({
+                    text: prev.show_name,
+                    image: prev.show_image,
+                }));
+                setHistoryItems(images);
+                setLoadingHistory(false);
+            })
+            .catch(error => {
+                console.error("Error fetching history:", error);
+                setLoadingHistory(false);
+            });
+    };
 
     // user personalization recipe
     const fetchUsePersDetails = (recommendationIds) => {
@@ -278,7 +319,7 @@ function App() {
 
     // get recommendation ids from personalize
     useEffect(() => {
-        const { userId, sims1, sims2 } = currentUser;
+        const { userId, sims1, sims2, history } = currentUser;
 
         fetch("https://8v7afwqlb1.execute-api.us-east-1.amazonaws.com/dev/recommendations", {
             method: "POST",
@@ -312,6 +353,8 @@ function App() {
             const sim2ItemIds = data.map(i => i.itemId);
             fetchSims2Details(sim2ItemIds);
         });
+
+        fetchHistoryDetails(history || []);
 
     }, [currentUser]);
 
@@ -349,6 +392,12 @@ function App() {
             </Navbar>
 
             <Container fluid className="px-0 mb-5">
+                <SwimLane 
+                    title="You Watched" 
+                    items={historyItems} 
+                    loading={!allLanesLoaded} 
+                    index={0}
+                />
                 <SwimLane 
                     title="Your Personalized Picks" 
                     items={shows} 
