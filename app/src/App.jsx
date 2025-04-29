@@ -156,29 +156,46 @@ function App() {
     // example users
     const users = [
         {
-            name: "Alice",
+            name: "Christopher",
             userId: "25a82ccb-f473-4f87-8ba3-c0cfc3d4f104",
             sims1: "90c586b3-f9d5-4f2d-905e-6b52c6eed01f",
             sims1name: "New Scandinavian Cooking",
             sims2: "4dcd2fc5-4662-42b9-bd74-713d34ec09a2",
-            sims2name: "Jamaica Inn"
-
+            sims2name: "Jamaica Inn",
+            genres: [
+                "Drama",
+                "History",
+                "Arts and Music",
+                "Science and Nature",
+                "Nature",
+                "Food"
+            ]
         },
         {
-            name: "Richard",
+            name: "Tami",
             userId: "03665f13-643c-4aca-be92-8572d98b3473",
             sims1: "0f957b9c-4775-4b74-8192-3c60d9172f64",
             sims1name: "American Experience",
             sims2: "5abd1675-ebf4-428f-afc1-3ee40ec19299",
-            sims2name: "Finding Your Roots"
+            sims2name: "Finding Your Roots",
+            genres: [
+                "History",
+                "Culture",
+                "Arts and Music",
+                "News and Public Affairs"
+            ]
         },
         {
-            name: "Lindsay",
+            name: "Jerry",
             userId: "c7b760fe-5013-45cc-b195-548950276f33",
             sims1: "46573fe1-546d-4cc6-8421-de4f4fd6db47",
             sims1name: "NOVA",
             sims2: "2ee500b2-3d17-4576-8f79-448a998c9ab8",
-            sims2name: "FRONTLINE"
+            sims2name: "FRONTLINE",
+            genres: [
+                "News and Public Affairs",
+                "Science and Nature"
+            ]
         }
     ];
 
@@ -312,7 +329,6 @@ function App() {
             const sim2ItemIds = data.map(i => i.itemId);
             fetchSims2Details(sim2ItemIds);
         });
-
     }, [currentUser]);
 
     return (
@@ -339,8 +355,25 @@ function App() {
                             style={{ fontWeight: 'bold' }}
                         >
                             {users.map((user, idx) => (
-                                <NavDropdown.Item key={idx} onClick={() => setCurrentUser(user)}>
-                                    {user.name}
+                                <NavDropdown.Item
+                                    key={idx}
+                                    onClick={() => setCurrentUser(user)}
+                                    style={{ whiteSpace: 'normal' }}
+                                >
+                                    <div style={{ fontWeight: 'bold', color: '#0A145A' }}>{user.name}</div>
+                                    {user.genres && user.genres.length > 0 ? (
+                                        <div style={{
+                                            fontSize: '0.75rem',
+                                            color: '#6c757d',
+                                            marginTop: '4px',
+                                            lineHeight: '1.2',
+                                            wordBreak: 'break-word'
+                                        }}>
+                                            {user.genres.join(", ")}
+                                        </div>
+                                    ) : (
+                                        <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>Error fetching genres</div>
+                                    )}
                                 </NavDropdown.Item>
                             ))}
                         </NavDropdown>
