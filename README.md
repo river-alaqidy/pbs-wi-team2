@@ -95,13 +95,37 @@ API:
 ### AWS Resources
 
 - #### S3
-    
+    - In order to use Personalize for recommendations S3 needs a bucket with atleast 3 files
+        1. Created S3 bucket, we have made bucket [pbs-data-team-2](https://us-east-1.console.aws.amazon.com/s3/buckets/pbs-data-team-2?region=us-east-1&tab=objects&bucketType=general)
+        2. In Bucket you need 3 files, interactions.csv, users.csv, and items.csv
+            - Schemas For Files:
+                > interactions.csv: USER_ID, ITEM_ID, TIMESTAMP, EVENT_TYPE
 
+                > users.csv: USER_ID, EMAIL, MEMBERSHIP_ID, DEVICE, GENRE_PREFERENCE\
+                    - GENRE_PREFERENCE is collected list of genres user has watched in past according to WPNE dataset
+
+                > items.csv: ITEM_ID, GENRES, CREATION_TIMESTAMP\
+                    - Team2ItemsAllDistinctGenreOnly.csv is the name of the final file we used for demo
 - #### Lambda
-
+    - Lambda was used to connect our Personalize recommendation results to API Gateway so that our frontend could retrieved results
+        1. Created Lambda Function, we made function [team2PersonalizeRecommender](https://us-east-1.console.aws.amazon.com/lambda/home?region=us-east-1#/functions/team2PersonalizeRecommender?tab=code)
+        2. This lamnda function follows one of two routes, /recommendatons or /sims and will use our Personalize campaigns that align with the designated route. /recommendations goes with user-personalizetion recipe and sims goes with similar-items recipe.
 - #### API Gateway
+    - We made an API that has 2 routes in which the frontend can connect to and get different results. Our API is [Personalize2API](https://us-east-1.console.aws.amazon.com/apigateway/main/apis/8v7afwqlb1/resources?api=8v7afwqlb1&region=us-east-1)
+        1. Route /recommendations gets user-personaliztion recommendations for our user, this is a POST Method
+        2. Route /simis gets similar-items recommendations for inputted item, we used items the user has watched in the past, this is a POST method
+        3. In order for both routes to work you must enable CORS, we just used the '*' option.
+        4. Final step to get gateway running is to click Deploy API button, you can then select any staging route you would like. 
 
 - #### Personalize
+    - We created a Dataset group: [pbs-recommendation-team2v2](https://us-east-1.console.aws.amazon.com/personalize/home?region=us-east-1#arn:aws:personalize:us-east-1:715841365024:dataset-group$pbs-recommendation-team2v2/setup)
+        - The Domain for this dataset group is Video On Demand
+    1. This dataset group uses 3 datasets interactions, users, and items in step 1 titled: Create datasets and import data
+    2. You can then run an analysis on the data and see what the contents of the files are and any adjustments you can make
+    3. In the left navigator you can go to Custom Resources -> Solutions and recipes, to see solutions for user-personalization recipes and similar items recipes. Solutions are basically ai models trained on your data imported. If you are expecting more data to enventually come in you can make the solutions automatically train and update. For our implementation we turned off automatic training to hopefully decrease costs
+        - our two solutions are user-pers and sims. For these to be usable you will need to create a current version for each
+    4. For each solution you need to make a campaign. A campaign is essentially an accessible version of the solution for an app to use.
+        - The campaign arn is needed for usage in the Lambda functions. There are currently 2 campaigns, one for each solutions
 
 - #### Glue
 
@@ -144,7 +168,7 @@ Works:
 - Current combination of S3, Lambda, Personalize, API Gateway, Step Functions, React + PHP UI
 
 Doesn't Work:
-- 
+- Everything should be working
 
 ## *What We Would Work On Next*
 Cost Analysis:
