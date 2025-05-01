@@ -94,48 +94,95 @@ API:
 ## *Overview of AWS Services and Code*
 ### AWS Resources
 
-- #### S3
-    - In order to use Personalize for recommendations S3 needs a bucket with atleast 3 files
-        1. Created S3 bucket, we have made bucket [pbs-data-team-2](https://us-east-1.console.aws.amazon.com/s3/buckets/pbs-data-team-2?region=us-east-1&tab=objects&bucketType=general)
-        2. In Bucket you need 3 files, interactions.csv, users.csv, and items.csv
-            - Schemas For Files:
-                > interactions.csv: USER_ID, ITEM_ID, TIMESTAMP, EVENT_TYPE
+#### S3
+- S3 is used to store input datasets required by Amazon Personalize. Three files are needed: `interactions.csv`, `users.csv`, and `items.csv`.
+- We created an S3 bucket named [pbs-data-team-2](https://us-east-1.console.aws.amazon.com/s3/buckets/pbs-data-team-2?region=us-east-1&tab=objects&bucketType=general).
+- **Dataset file schemas**:
+    - `interactions.csv`: `USER_ID`, `ITEM_ID`, `TIMESTAMP`, `EVENT_TYPE`
+    - `users.csv`: `USER_ID`, `EMAIL`, `MEMBERSHIP_ID`, `DEVICE`, `GENRE_PREFERENCE`  
+        - `GENRE_PREFERENCE` is a derived list of genres each user has engaged with, based on the WPNE dataset.
+    - `items.csv`: `ITEM_ID`, `GENRES`, `CREATION_TIMESTAMP`  
+        - Our final demo file was named `Team2ItemsAllDistinctGenreOnly.csv`.
 
-                > users.csv: USER_ID, EMAIL, MEMBERSHIP_ID, DEVICE, GENRE_PREFERENCE\
-                    - GENRE_PREFERENCE is collected list of genres user has watched in past according to WPNE dataset
+#### Lambda
+- AWS Lambda is used to connect Personalize recommendation results to API Gateway, allowing frontend access.
+- We created a Lambda function named [team2PersonalizeRecommender](https://us-east-1.console.aws.amazon.com/lambda/home?region=us-east-1#/functions/team2PersonalizeRecommender?tab=code).
+- The function supports two routes:
+    - `/recommendations` → calls the **user-personalization** campaign
+    - `/sims` → calls the **similar-items** campaign
 
-                > items.csv: ITEM_ID, GENRES, CREATION_TIMESTAMP\
-                    - Team2ItemsAllDistinctGenreOnly.csv is the name of the final file we used for demo
-- #### Lambda
-    - Lambda was used to connect our Personalize recommendation results to API Gateway so that our frontend could retrieved results
-        1. Created Lambda Function, we made function [team2PersonalizeRecommender](https://us-east-1.console.aws.amazon.com/lambda/home?region=us-east-1#/functions/team2PersonalizeRecommender?tab=code)
-        2. This lamnda function follows one of two routes, /recommendatons or /sims and will use our Personalize campaigns that align with the designated route. /recommendations goes with user-personalizetion recipe and sims goes with similar-items recipe.
-- #### API Gateway
-    - We made an API that has 2 routes in which the frontend can connect to and get different results. Our API is [Personalize2API](https://us-east-1.console.aws.amazon.com/apigateway/main/apis/8v7afwqlb1/resources?api=8v7afwqlb1&region=us-east-1)
-        1. Route /recommendations gets user-personaliztion recommendations for our user, this is a POST Method
-        2. Route /simis gets similar-items recommendations for inputted item, we used items the user has watched in the past, this is a POST method
-        3. In order for both routes to work you must enable CORS, we just used the '*' option.
-        4. Final step to get gateway running is to click Deploy API button, you can then select any staging route you would like. 
+#### API Gateway
+- API Gateway exposes our Lambda functionality to the frontend via HTTP endpoints.  
+- Our API is called [Personalize2API](https://us-east-1.console.aws.amazon.com/apigateway/main/apis/8v7afwqlb1/resources?api=8v7afwqlb1&region=us-east-1) and has two routes:
+    1. `POST /recommendations`: retrieves user-personalization recommendations
+    2. `POST /sims`: retrieves similar-item recommendations for a given item ID
+- CORS must be enabled (we used `*` for simplicity)
+- After setting up, click **"Deploy API"** and choose your desired stage (e.g., `dev`)
 
-- #### Personalize
-    - We created a Dataset group: [pbs-recommendation-team2v2](https://us-east-1.console.aws.amazon.com/personalize/home?region=us-east-1#arn:aws:personalize:us-east-1:715841365024:dataset-group$pbs-recommendation-team2v2/setup)
-        - The Domain for this dataset group is Video On Demand
-    1. This dataset group uses 3 datasets interactions, users, and items in step 1 titled: Create datasets and import data
-    2. You can then run an analysis on the data and see what the contents of the files are and any adjustments you can make
-    3. In the left navigator you can go to Custom Resources -> Solutions and recipes, to see solutions for user-personalization recipes and similar items recipes. Solutions are basically ai models trained on your data imported. If you are expecting more data to enventually come in you can make the solutions automatically train and update. For our implementation we turned off automatic training to hopefully decrease costs
-        - our two solutions are user-pers and sims. For these to be usable you will need to create a current version for each
-    4. For each solution you need to make a campaign. A campaign is essentially an accessible version of the solution for an app to use.
-        - The campaign arn is needed for usage in the Lambda functions. There are currently 2 campaigns, one for each solutions
+#### Personalize
+- We created a dataset group named [pbs-recommendation-team2v2](https://us-east-1.console.aws.amazon.com/personalize/home?region=us-east-1#arn:aws:personalize:us-east-1:715841365024:dataset-group$pbs-recommendation-team2v2/setup), with the **Video on Demand** domain.
+- Steps followed:
+    1. Created 3 datasets: `interactions`, `users`, and `items`, and imported the corresponding S3 data
+    2. Ran data analysis to verify quality and compatibility
+    3. Under **Custom Resources → Solutions and Recipes**, created:
+        - A solution for **user-personalization**
+        - A solution for **similar-items**
+        - We **disabled automatic retraining** to reduce ongoing costs
+    4. For each solution, we created a **campaign** (a live, queryable endpoint for your app)
+        - The campaign ARNs are used in the Lambda function to route the correct recommendation logic
 
-- #### Glue
 
-- #### Step Functions
+#### Glue
+
+#### Step Functions
 
 ### Website Code
 
-- #### React + JavaScript
+#### React + JavaScript  
+> Our React app is built using Vite. `main.jsx` loads the `App` component, which handles all API calls and rendering of TV show recommendations.
 
-- #### PHP
+- In `App.jsx`, `react-bootstrap` is used to create:
+    - A **navbar** with a user dropdown to switch between different anonymized users
+    - **Three swimlanes** (horizontal carousels) of TV show recommendations using `react-multi-carousel`
+    - **Loading placeholders** that animate while data is being fetched
+
+- **Box Component**:  
+    - A reusable card-like component that displays TV show information such as title, image, genre, duration, etc.
+
+- **SwimLane Component**:  
+    - Displays a title and either loading placeholders or a scrollable carousel of `Box` components based on the loading state.
+
+- **App Component**:
+    - Loads 3 predefined anonymized users (based on WPNE dataset)
+    - Uses `useEffect` to trigger 3 API calls upon user selection:
+        - AWS Personalize for user-based recommendations
+        - AWS Personalize for similar-items to 2 previously watched shows
+    - Each set of recommended item IDs is passed to a local Media Manager API to fetch show metadata (images, genres, durations, etc.)
+    - This metadata is displayed inside the corresponding `SwimLane` carousel
+
+
+#### PHP
+> `index.php` acts as a proxy server that makes **Multi-cURL Asset Requests** to send parallel requests to the Media Manager API in order to retrieve detailed information about TV shows. Notably, instead of using the Media Manager API client, we use direct URL calls due to performance issues related to slow data loading when using the client for getting one item at a time.
+
+- **Backend Setup**:
+    - First, **CORS permissions** are enabled through HTTP headers. This is necessary to allow the frontend (React) to make cross-origin requests to the backend API, enabling communication between different domains.
+    - The `POST` request sent from the frontend is parsed to retrieve the **recommendation IDs**. These IDs are extracted from the incoming request and are then prepared to be used in the cURL requests to fetch the corresponding asset data.
+
+- **cURL**:
+    - For each **recommendation ID**, a parallel cURL request is made to fetch the associated **asset details**. This is achieved using **multi-cURL**, which allows multiple HTTP requests to be sent simultaneously. This approach reduces loading time compared to sequential requests.
+    - After fetching the assets, the script **processes the results** to extract relevant details, such as the **show ID**. This is necessary to collect additional information about the show, both specific to the asset and general information about the show itself (e.g., title, genre).
+
+- **Data Processing**:
+    - After all asset and show data is fetched, the script **combines** the information into a structured final response. This response includes:
+        - **Show name**: The title of the show related to the recommendation.
+        - **Show image**: A URL to the image of the show.
+        - **Show genre**: The genre of the show (e.g., Drama, Comedy).
+        - **Episode name**: The title of the specific episode tied to the recommendation.
+        - **Episode duration**: The length of the episode (e.g., 45 minutes).
+        - **Episode premiere date**: The date the episode originally aired.
+
+    - The script outputs this combined data as a **JSON response**, which is then returned to the frontend for rendering. This structured data enables the frontend to display the information to the user in a clear and organized manner.
+
 
 ### Data Processing Code
 
@@ -152,16 +199,6 @@ API:
         > This helper script checks a dataset for duplicate rows to ensure clean, unique data for use with AWS Personalize.
     - transform.py
         > This script processes anonymized user interaction data to create a users.csv file with one row per user, consolidating each user's genre preferences into a single list for AWS Personalize.
-
-
-
-
-
-
-
-
-
-
 
 ## *What Works & What Doesn’t*
 Works:
